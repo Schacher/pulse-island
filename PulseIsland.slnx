@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PulseIsland.App/PulseIsland.App.csproj" />
+    <Project Path="src/PulseIsland.Core/PulseIsland.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PulseIsland.Core.Tests/PulseIsland.Core.Tests.csproj" />
+  </Folder>
+</Solution>

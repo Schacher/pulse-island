@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Island content. Always dark: the pill is near-black in both Windows themes. -->
+<UserControl
+    x:Class="PulseIsland.Island.IslandView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:PulseIsland.Island"
+    RequestedTheme="Dark">
+
+    <UserControl.Resources>
+        <!-- Lightweight styling: no grey plate behind media buttons, soft hover on the black pill. -->
+        <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#1FFFFFFF" />
+        <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#2EFFFFFF" />
+        <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="Transparent" />
+        <SolidColorBrush x:Key="ButtonBorderBrushDisabled" Color="Transparent" />
+        <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#59FFFFFF" />
+        <SolidColorBrush x:Key="Primary" Color="#FFFFFFFF" />
+        <SolidColorBrush x:Key="Secondary" Color="#FF9C9CA3" />
+        <Style x:Key="Title" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource Primary}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="TextWrapping" Value="NoWrap" />
+        </Style>
+        <Style x:Key="Subtitle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource Secondary}" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="TextWrapping" Value="NoWrap" />
+        </Style>
+        <Style x:Key="SmallButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{StaticResource Primary}" />
+            <Setter Property="Width" Value="36" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="17" />
+        </Style>
+        <Style x:Key="PillButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            <Setter Property="Background" Value="#26FFFFFF" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{StaticResource Primary}" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Padding" Value="12,5" />
+            <Setter Property="CornerRadius" Value="15" />
+        </Style>
+        <Style x:Key="DotButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Height" Value="14" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+        </Style>
+        <Style x:Key="MediaButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{StaticResource Primary}" />
+            <Setter Property="Width" Value="48" />
+            <Setter Property="Height" Value="40" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="20" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- Compact: art + bars -->
+        <Grid x:Name="CompactPanel" Padding="6,0,14,0" Visibility="{x:Bind Vm.CompactVisibility, Mode=OneWay}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Border Width="21" Height="21" CornerRadius="6" Background="#FF26262B" VerticalAlignment="Center"
+                    Visibility="{x:Bind Vm.CompactArtVisibility, Mode=OneWay}">
+                <Grid>
+                    <Image Source="{x:Bind Vm.Art, Mode=OneWay}" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <FontIcon Glyph="&#xE8D6;" FontSize="11" Foreground="{StaticResource Secondary}"
+                              Visibility="{x:Bind Vm.ArtPlaceholderVisibility, Mode=OneWay}" />
+                </Grid>
+            </Border>
+            <!-- Pomodoro takes the left slot while it runs -->
+            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="2,0,0,0"
+                        Visibility="{x:Bind Vm.PomodoroVisibility, Mode=OneWay}">
+                <ProgressRing Width="18" Height="18" IsIndeterminate="False" Maximum="100" Background="#33FFFFFF"
+                              Foreground="{x:Bind Vm.PomodoroBrush, Mode=OneWay}" Value="{x:Bind Vm.PomodoroProgress, Mode=OneWay}" />
+                <TextBlock Style="{StaticResource Title}" FontSize="12.5" VerticalAlignment="Center" Text="{x:Bind Vm.PomodoroTimeText, Mode=OneWay}" />
+            </StackPanel>
+            <local:SpectrumBars x:Name="CompactBars" Grid.Column="2" BarCount="4" Width="20" Height="14" VerticalAlignment="Center"
+                                Visibility="{x:Bind Vm.MediaVisibility, Mode=OneWay}" />
+        </Grid>
+
+        <!-- Peek: art + title/artist + bars -->
+        <Grid x:Name="PeekPanel" Padding="10,0,20,0" ColumnSpacing="11" Visibility="{x:Bind Vm.PeekVisibility, Mode=OneWay}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Border Width="40" Height="40" CornerRadius="10" Background="#FF26262B" VerticalAlignment="Center">
+                <Grid>
+                    <Image Source="{x:Bind Vm.Art, Mode=OneWay}" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <FontIcon Glyph="&#xE8D6;" FontSize="17" Foreground="{StaticResource Secondary}"
+                              Visibility="{x:Bind Vm.ArtPlaceholderVisibility, Mode=OneWay}" />
+                </Grid>
+            </Border>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                <TextBlock Style="{StaticResource Title}" FontSize="13.5" Text="{x:Bind Vm.Title, Mode=OneWay}" />
+                <TextBlock Style="{StaticResource Subtitle}" FontSize="12" Text="{x:Bind Vm.Artist, Mode=OneWay}" Visibility="{x:Bind Vm.ArtistVisibility, Mode=OneWay}" />
+            </StackPanel>
+            <local:SpectrumBars x:Name="PeekBars" Visibility="{x:Bind Vm.MediaVisibility, Mode=OneWay}" Grid.Column="2" BarCount="5" Width="26" Height="18" VerticalAlignment="Center" />
+        </Grid>
+
+        <!-- Expanded: art, texts, seek bar, controls -->
+        <Grid x:Name="ExpandedPanel" Visibility="{x:Bind Vm.ExpandedVisibility, Mode=OneWay}">
+          <Grid Padding="20,18,20,18" RowSpacing="4" Visibility="{x:Bind Vm.MediaPageVisibility, Mode=OneWay}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid ColumnSpacing="14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Border Width="58" Height="58" CornerRadius="13" Background="#FF26262B">
+                    <Grid>
+                        <Image Source="{x:Bind Vm.Art, Mode=OneWay}" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <FontIcon Glyph="&#xE8D6;" FontSize="22" Foreground="{StaticResource Secondary}"
+                                  Visibility="{x:Bind Vm.ArtPlaceholderVisibility, Mode=OneWay}" />
+                    </Grid>
+                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                    <TextBlock Style="{StaticResource Title}" FontSize="15.5" Text="{x:Bind Vm.Title, Mode=OneWay}" />
+                    <TextBlock Style="{StaticResource Subtitle}" FontSize="13" Text="{x:Bind Vm.Artist, Mode=OneWay}" Visibility="{x:Bind Vm.ArtistVisibility, Mode=OneWay}" />
+                </StackPanel>
+                <local:SpectrumBars x:Name="ExpandedBars" Visibility="{x:Bind Vm.MediaVisibility, Mode=OneWay}" Grid.Column="2" BarCount="8" Width="40" Height="24" VerticalAlignment="Center" />
+            </Grid>
+            <Grid Grid.Row="1" ColumnSpacing="8" IsHitTestVisible="{x:Bind Vm.CanSeek, Mode=OneWay}" Visibility="{x:Bind Vm.MediaVisibility, Mode=OneWay}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Style="{StaticResource Subtitle}" FontSize="11" VerticalAlignment="Center" Text="{x:Bind Vm.PositionText, Mode=OneWay}" />
+                <Slider x:Name="SeekBar" Grid.Column="1" Minimum="0" IsThumbToolTipEnabled="False"
+                        Foreground="{x:Bind Vm.AccentBrush}"
+                        Maximum="{x:Bind Vm.DurationSeconds, Mode=OneWay}"
+                        Value="{x:Bind Vm.PositionSeconds, Mode=OneWay}" />
+                <TextBlock Grid.Column="2" Style="{StaticResource Subtitle}" FontSize="11" VerticalAlignment="Center" Text="{x:Bind Vm.DurationText, Mode=OneWay}" />
+            </Grid>
+            <!-- Volume of the playing app only (its audio session), not the Windows master volume -->
+            <Grid Grid.Row="3" ColumnSpacing="6" Visibility="{x:Bind Vm.MediaAppVisibility, Mode=OneWay}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button Style="{StaticResource SmallButton}" Margin="-8,0,0,0" Click="{x:Bind Vm.ToggleMediaAppMute}"
+                        ToolTipService.ToolTip="{x:Bind Vm.MediaAppMuteText, Mode=OneWay}" AutomationProperties.Name="{x:Bind Vm.MediaAppMuteText, Mode=OneWay}">
+                    <FontIcon Glyph="{x:Bind Vm.MediaApp.MuteGlyph, Mode=OneWay}" FontSize="15" />
+                </Button>
+                <TextBlock Grid.Column="1" Style="{StaticResource Subtitle}" FontSize="11" MaxWidth="80" VerticalAlignment="Center"
+                           Text="{x:Bind Vm.MediaApp.Name, Mode=OneWay}" />
+                <Slider Grid.Column="2" Minimum="0" Maximum="100" StepFrequency="1" IsThumbToolTipEnabled="False"
+                        Foreground="{x:Bind Vm.AccentBrush}" Value="{x:Bind Vm.MediaApp.Volume, Mode=TwoWay}"
+                        AutomationProperties.Name="{x:Bind Vm.MediaApp.Name, Mode=OneWay}" />
+                <TextBlock Grid.Column="3" Style="{StaticResource Subtitle}" FontSize="11" MinWidth="22" TextAlignment="Right" VerticalAlignment="Center"
+                           Text="{x:Bind Vm.MediaAppVolumeText, Mode=OneWay}" />
+            </Grid>
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="18">
+                <Button Style="{StaticResource MediaButton}" Click="{x:Bind Vm.Previous}" IsEnabled="{x:Bind Vm.CanPrevious, Mode=OneWay}"
+                        AutomationProperties.Name="Previous">
+                    <FontIcon Glyph="&#xE892;" FontSize="18" />
+                </Button>
+                <Button Style="{StaticResource MediaButton}" Click="{x:Bind Vm.PlayPause}" IsEnabled="{x:Bind Vm.HasMedia, Mode=OneWay}"
+                        AutomationProperties.Name="Play/Pause">
+                    <FontIcon Glyph="{x:Bind Vm.PlayGlyph, Mode=OneWay}" FontSize="24" />
+                </Button>
+                <Button Style="{StaticResource MediaButton}" Click="{x:Bind Vm.Next}" IsEnabled="{x:Bind Vm.CanNext, Mode=OneWay}"
+                        AutomationProperties.Name="Next">
+                    <FontIcon Glyph="&#xE893;" FontSize="18" />
+                </Button>
+            </StackPanel>
+          </Grid>
+
+          <!-- Focus page: Pomodoro | water, cleaning mode -->
+          <Grid Padding="20,16,20,16" ColumnSpacing="18" Visibility="{x:Bind Vm.FocusPageVisibility, Mode=OneWay}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid Width="100" Height="100" VerticalAlignment="Center">
+                <ProgressRing Width="100" Height="100" IsIndeterminate="False" Maximum="100" Background="#26FFFFFF"
+                              Foreground="{x:Bind Vm.PomodoroBrush, Mode=OneWay}" Value="{x:Bind Vm.PomodoroProgress, Mode=OneWay}" />
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock Style="{StaticResource Title}" FontSize="21" HorizontalAlignment="Center" Text="{x:Bind Vm.PomodoroTimeText, Mode=OneWay}" />
+                    <TextBlock Style="{StaticResource Subtitle}" FontSize="11" HorizontalAlignment="Center" Text="{x:Bind Vm.PomodoroPhaseText, Mode=OneWay}" />
+                </StackPanel>
+            </Grid>
+            <Grid Grid.Column="1" RowSpacing="6">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <StackPanel Orientation="Horizontal" Spacing="4" Margin="-8,0,0,0">
+                    <Button Style="{StaticResource SmallButton}" Click="{x:Bind Vm.PomodoroStartPause}"
+                            ToolTipService.ToolTip="{x:Bind Vm.PomodoroStartText, Mode=OneWay}"
+                            AutomationProperties.Name="{x:Bind Vm.PomodoroStartText, Mode=OneWay}">
+                        <FontIcon Glyph="{x:Bind Vm.PomodoroPlayGlyph, Mode=OneWay}" FontSize="16" />
+                    </Button>
+                    <!-- Running: skip / stop. Idle: set the focus length. -->
+                    <Button Style="{StaticResource SmallButton}" Click="{x:Bind Vm.PomodoroSkip}" Visibility="{x:Bind Vm.PomodoroVisibility, Mode=OneWay}"
+                            ToolTipService.ToolTip="{x:Bind Vm.PomodoroSkipText, Mode=OneWay}" AutomationProperties.Name="{x:Bind Vm.PomodoroSkipText, Mode=OneWay}">
+                        <FontIcon Glyph="&#xE893;" FontSize="15" />
+                    </Button>
+                    <Button Style="{StaticResource SmallButton}" Click="{x:Bind Vm.PomodoroStop}" Visibility="{x:Bind Vm.PomodoroVisibility, Mode=OneWay}"
+                            ToolTipService.ToolTip="{x:Bind Vm.PomodoroStopText, Mode=OneWay}" AutomationProperties.Name="{x:Bind Vm.PomodoroStopText, Mode=OneWay}">
+                        <FontIcon Glyph="&#xE71A;" FontSize="15" />
+                    </Button>
+                    <Button Style="{StaticResource SmallButton}" Click="{x:Bind Vm.PomodoroShorter}" Visibility="{x:Bind Vm.PomodoroIdleVisibility, Mode=OneWay}"
+                            ToolTipService.ToolTip="−5 min" AutomationProperties.Name="−5 min">
+                        <TextBlock Text="−5" FontSize="13" FontWeight="SemiBold" />
+                    </Button>
+                    <Button Style="{StaticResource SmallButton}" Click="{x:Bind Vm.PomodoroLonger}" Visibility="{x:Bind Vm.PomodoroIdleVisibility, Mode=OneWay}"
+                            ToolTipService.ToolTip="+5 min" AutomationProperties.Name="+5 min">
+                        <TextBlock Text="+5" FontSize="13" FontWeight="SemiBold" />
+                    </Button>
+                </StackPanel>
+                <TextBlock Grid.Row="1" Style="{StaticResource Title}" FontSize="12.5" Text="{x:Bind Vm.WaterText, Mode=OneWay}" />
+                <Grid Grid.Row="2" ColumnSpacing="4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ProgressBar Maximum="100" VerticalAlignment="Center" Margin="0,0,4,0" Value="{x:Bind Vm.WaterProgress, Mode=OneWay}" Foreground="#FF4FC3F7" Background="#26FFFFFF" />
+                    <Button Grid.Column="1" Style="{StaticResource SmallButton}" Click="{x:Bind Vm.RemoveWater}"
+                            ToolTipService.ToolTip="{x:Bind Vm.WaterRemoveText, Mode=OneWay}" AutomationProperties.Name="{x:Bind Vm.WaterRemoveText, Mode=OneWay}">
+                        <FontIcon Glyph="&#xE738;" FontSize="13" />
+                    </Button>
+                    <Button Grid.Column="2" Style="{StaticResource PillButton}" Padding="10,5" Click="{x:Bind Vm.AddWater}" Content="{x:Bind Vm.WaterAddText, Mode=OneWay}" />
+                    <Button Grid.Column="3" Style="{StaticResource SmallButton}" Click="{x:Bind Vm.ResetWater}"
+                            ToolTipService.ToolTip="{x:Bind Vm.WaterResetText, Mode=OneWay}" AutomationProperties.Name="{x:Bind Vm.WaterResetText, Mode=OneWay}">
+                        <FontIcon Glyph="&#xE72C;" FontSize="13" />
+                    </Button>
+                </Grid>
+                <Button Grid.Row="3" Style="{StaticResource PillButton}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Click="{x:Bind Vm.StartCleaning}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE765;" FontSize="13" />
+                        <TextBlock Text="{x:Bind Vm.CleaningButtonText, Mode=OneWay}" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+          </Grid>
+
+          <!-- Page dots -->
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,1">
+              <Button Style="{StaticResource DotButton}" Click="{x:Bind Vm.ShowMediaPage}" AutomationProperties.Name="Media">
+                  <Ellipse Width="6" Height="6" Fill="{x:Bind Vm.MediaDotBrush, Mode=OneWay}" />
+              </Button>
+              <Button Style="{StaticResource DotButton}" Click="{x:Bind Vm.ShowFocusPage}" AutomationProperties.Name="Focus">
+                  <Ellipse Width="6" Height="6" Fill="{x:Bind Vm.FocusDotBrush, Mode=OneWay}" />
+              </Button>
+          </StackPanel>
+        </Grid>
+
+        <!-- OSD: volume, mic, lock keys -->
+        <Grid x:Name="OsdPanel" Padding="16,0,18,0" ColumnSpacing="12" Visibility="{x:Bind Vm.OsdVisibility, Mode=OneWay}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <FontIcon Glyph="{x:Bind Vm.OsdGlyph, Mode=OneWay}" FontSize="16" Foreground="{StaticResource Primary}" />
+            <TextBlock Grid.Column="1" Style="{StaticResource Title}" FontSize="13" VerticalAlignment="Center" Text="{x:Bind Vm.OsdText, Mode=OneWay}"
+                       Visibility="{x:Bind Vm.OsdTextVisibility, Mode=OneWay}" />
+            <ProgressBar Grid.Column="1" Maximum="100" VerticalAlignment="Center" Value="{x:Bind Vm.OsdValue, Mode=OneWay}"
+                         Foreground="{x:Bind Vm.AccentBrush}" Background="#33FFFFFF" Visibility="{x:Bind Vm.OsdBarVisibility, Mode=OneWay}" />
+            <TextBlock Grid.Column="2" Style="{StaticResource Subtitle}" FontSize="12" VerticalAlignment="Center" MinWidth="22" TextAlignment="Right"
+                       Text="{x:Bind Vm.OsdValueText, Mode=OneWay}" />
+        </Grid>
+
+        <!-- Card: reminders, Pomodoro done, device connected -->
+        <Grid x:Name="CardPanel" Padding="14,0,16,0" ColumnSpacing="12" Visibility="{x:Bind Vm.CardVisibility, Mode=OneWay}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Border Width="44" Height="44" CornerRadius="22" Background="{x:Bind Vm.CardBrush, Mode=OneWay}" VerticalAlignment="Center">
+                <!-- Fluent icons (PUA) or colour emoji -->
+                <TextBlock Text="{x:Bind Vm.CardGlyph, Mode=OneWay}" FontFamily="{x:Bind Vm.CardGlyphFont, Mode=OneWay}" FontSize="20"
+                           Foreground="{StaticResource Primary}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                <TextBlock Style="{StaticResource Title}" FontSize="13.5" Text="{x:Bind Vm.CardTitle, Mode=OneWay}" />
+                <TextBlock Style="{StaticResource Subtitle}" FontSize="12" Text="{x:Bind Vm.CardSubtitle, Mode=OneWay}"
+                           Visibility="{x:Bind Vm.CardSubtitleVisibility, Mode=OneWay}" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                <Button Style="{StaticResource PillButton}" Click="{x:Bind Vm.CardSecondary}" Content="{x:Bind Vm.CardSecondaryText, Mode=OneWay}"
+                        Visibility="{x:Bind Vm.CardSecondaryVisibility, Mode=OneWay}" />
+                <Button Style="{StaticResource PillButton}" Click="{x:Bind Vm.CardPrimary}" Content="{x:Bind Vm.CardPrimaryText, Mode=OneWay}"
+                        Visibility="{x:Bind Vm.CardPrimaryVisibility, Mode=OneWay}" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Cleaning mode -->
+        <Grid x:Name="CleaningPanel" Padding="22,16,22,12" RowSpacing="6" Visibility="{x:Bind Vm.CleaningVisibility, Mode=OneWay}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid ColumnSpacing="14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid Width="52" Height="52">
+                    <ProgressRing Width="52" Height="52" IsIndeterminate="False" Maximum="100" Background="#26FFFFFF"
+                                  Foreground="#FF66BB6A" Value="{x:Bind Vm.CleaningProgress, Mode=OneWay}" />
+                    <FontIcon Glyph="&#xE765;" FontSize="18" Foreground="{StaticResource Primary}" />
+                </Grid>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                    <TextBlock Style="{StaticResource Title}" FontSize="15" Text="{x:Bind Vm.CleaningTitle, Mode=OneWay}" />
+                    <TextBlock Style="{StaticResource Subtitle}" FontSize="12" Text="{x:Bind Vm.CleaningRemainingText, Mode=OneWay}" />
+                </StackPanel>
+            </Grid>
+            <StackPanel Grid.Row="1" Spacing="4">
+                <TextBlock Style="{StaticResource Subtitle}" FontSize="11.5" TextWrapping="Wrap" TextTrimming="None" Text="{x:Bind Vm.CleaningHint, Mode=OneWay}" />
+                <ProgressBar Maximum="100" Value="{x:Bind Vm.CleaningHoldProgress, Mode=OneWay}" Foreground="#FF66BB6A" Background="Transparent" />
+            </StackPanel>
+            <local:SlideToUnlock x:Name="UnlockSlider" Grid.Row="2" VerticalAlignment="Bottom" Text="{x:Bind Vm.CleaningSlideText, Mode=OneWay}" />
+        </Grid>
+    </Grid>
+</UserControl>
+

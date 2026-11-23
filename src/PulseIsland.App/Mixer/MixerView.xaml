@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="PulseIsland.Mixer.MixerView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:loc="using:PulseIsland.Core.Localization"
+    xmlns:local="using:PulseIsland.Mixer">
+
+    <UserControl.Resources>
+        <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            <Setter Property="Width" Value="36" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="SectionHeader" TargetType="TextBlock" BasedOn="{StaticResource BodyStrongTextBlockStyle}">
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="Meter" TargetType="Rectangle">
+            <Setter Property="Height" Value="3" />
+            <Setter Property="RadiusX" Value="1.5" />
+            <Setter Property="RadiusY" Value="1.5" />
+            <Setter Property="Margin" Value="10,-6,10,0" />
+            <Setter Property="Fill" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+        </Style>
+        <Style x:Key="ValueText" TargetType="TextBlock" BasedOn="{StaticResource CaptionTextBlockStyle}">
+            <Setter Property="Width" Value="28" />
+            <Setter Property="TextAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Padding="16,12,16,8" RowSpacing="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <InfoBar Grid.Row="0" IsClosable="True"
+                 IsOpen="{x:Bind Vm.MessageOpen, Mode=TwoWay}"
+                 Message="{x:Bind Vm.Message, Mode=OneWay}"
+                 Severity="{x:Bind Vm.MessageSeverity, Mode=OneWay}" />
+
+        <!-- Output -->
+        <StackPanel Grid.Row="1" Spacing="4">
+            <Grid>
+                <TextBlock Style="{StaticResource SectionHeader}" Text="{x:Bind loc:Loc.T('Mixer.Output')}" />
+                <HyperlinkButton HorizontalAlignment="Right" Padding="4,2" FontSize="12"
+                                 Content="{x:Bind Vm.SpatialText, Mode=OneWay}" Click="OpenSoundSettings" />
+            </Grid>
+            <!-- A menu, not a ComboBox: ComboBox type-ahead let stray keystrokes switch the default device. -->
+            <DropDownButton HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                            IsEnabled="{x:Bind Vm.CanSwitchDevices, Mode=OneWay}"
+                            ToolTipService.ToolTip="{x:Bind Vm.DeviceSwitchTooltip, Mode=OneWay}">
+                <TextBlock Text="{x:Bind Vm.OutputName, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
+                <DropDownButton.Flyout>
+                    <MenuFlyout Placement="Bottom" Opening="FillOutputMenu" />
+                </DropDownButton.Flyout>
+            </DropDownButton>
+            <Grid ColumnSpacing="6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button Style="{StaticResource IconButton}" Click="{x:Bind Vm.ToggleMasterMute}"
+                        ToolTipService.ToolTip="{x:Bind loc:Loc.T('Mixer.Mute')}"
+                        AutomationProperties.Name="{x:Bind loc:Loc.T('Mixer.Mute')}">
+                    <FontIcon FontSize="16" Glyph="{x:Bind Vm.MasterGlyph, Mode=OneWay}" />
+                </Button>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <Slider Minimum="0" Maximum="100" StepFrequency="1"
+                            Value="{x:Bind Vm.MasterVolume, Mode=TwoWay}"
+                            AutomationProperties.Name="{x:Bind loc:Loc.T('Mixer.Output')}" />
+                    <Rectangle Style="{StaticResource Meter}" RenderTransformOrigin="0,0.5">
+                        <Rectangle.RenderTransform>
+                            <ScaleTransform ScaleX="{x:Bind Vm.MasterPeak, Mode=OneWay}" />
+                        </Rectangle.RenderTransform>
+                    </Rectangle>
+                </StackPanel>
+                <TextBlock Grid.Column="2" Style="{StaticResource ValueText}" Text="{x:Bind Vm.MasterVolumeText, Mode=OneWay}" />
+            </Grid>
+        </StackPanel>
+
+        <!-- Input -->
+        <StackPanel Grid.Row="2" Spacing="4">
+            <TextBlock Style="{StaticResource SectionHeader}" Text="{x:Bind loc:Loc.T('Mixer.Input')}" />
+            <DropDownButton HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                            IsEnabled="{x:Bind Vm.CanSwitchDevices, Mode=OneWay}"
+                            ToolTipService.ToolTip="{x:Bind Vm.DeviceSwitchTooltip, Mode=OneWay}">
+                <TextBlock Text="{x:Bind Vm.InputName, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
+                <DropDownButton.Flyout>
+                    <MenuFlyout Placement="Bottom" Opening="FillInputMenu" />
+                </DropDownButton.Flyout>
+            </DropDownButton>
+            <Grid ColumnSpacing="6" IsHitTestVisible="{x:Bind Vm.HasInput, Mode=OneWay}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button Style="{StaticResource IconButton}" Click="{x:Bind Vm.ToggleMicMuteClick}"
+                        ToolTipService.ToolTip="{x:Bind loc:Loc.T('Mixer.Mute')}"
+                        AutomationProperties.Name="{x:Bind loc:Loc.T('Mixer.Mute')}">
+                    <FontIcon FontSize="16" Glyph="{x:Bind Vm.MicGlyph, Mode=OneWay}" />
+                </Button>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <Slider Minimum="0" Maximum="100" StepFrequency="1"
+                            Value="{x:Bind Vm.MicVolume, Mode=TwoWay}"
+                            AutomationProperties.Name="{x:Bind loc:Loc.T('Mixer.Input')}" />
+                    <Rectangle Style="{StaticResource Meter}" RenderTransformOrigin="0,0.5">
+                        <Rectangle.RenderTransform>
+                            <ScaleTransform ScaleX="{x:Bind Vm.MicPeak, Mode=OneWay}" />
+                        </Rectangle.RenderTransform>
+                    </Rectangle>
+                </StackPanel>
+                <TextBlock Grid.Column="2" Style="{StaticResource ValueText}" Text="{x:Bind Vm.MicVolumeText, Mode=OneWay}" />
+            </Grid>
+        </StackPanel>
+
+        <!-- Profiles -->
+        <StackPanel Grid.Row="3" Spacing="6">
+            <TextBlock Style="{StaticResource SectionHeader}" Text="{x:Bind loc:Loc.T('Mixer.Profiles')}" />
+            <ItemsControl ItemsSource="{x:Bind Vm.Profiles}" IsTabStop="False">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VariableSizedWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="4" ItemWidth="82" ItemHeight="38" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="local:ProfileItem">
+                        <Button HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="3" Padding="4,0" Click="{x:Bind Apply}"
+                                ToolTipService.ToolTip="{x:Bind SaveText, Mode=OneWay}">
+                            <TextBlock Text="{x:Bind Name, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
+                            <Button.ContextFlyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem Text="{x:Bind SaveText, Mode=OneWay}" Click="{x:Bind SaveCurrent}">
+                                        <MenuFlyoutItem.Icon>
+                                            <FontIcon Glyph="&#xE74E;" />
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                </MenuFlyout>
+                            </Button.ContextFlyout>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+
+        <!-- Apps -->
+        <Grid Grid.Row="4" RowSpacing="4">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <TextBlock Style="{StaticResource SectionHeader}" Text="{x:Bind loc:Loc.T('Mixer.Apps')}" />
+            <ScrollViewer Grid.Row="1" Margin="0,0,-12,0" Padding="0,0,12,0" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Margin="0,6" Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Visibility="{x:Bind Vm.NoApps, Mode=OneWay}"
+                               Text="{x:Bind loc:Loc.T('Mixer.NoApps')}" />
+                    <!-- Non-virtualizing on purpose: the window sizes itself to the full list height. -->
+                    <ItemsControl ItemsSource="{x:Bind Vm.Apps}" IsTabStop="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="local:AppGroupViewModel">
+                                <Grid Padding="0,2" ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="24" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid Width="24" Height="24" Margin="0,14,0,0" VerticalAlignment="Center">
+                                        <Image Source="{x:Bind Icon, Mode=OneWay}" />
+                                        <FontIcon FontSize="18" Glyph="{x:Bind FallbackGlyph}"
+                                                  Visibility="{x:Bind GlyphVisibility, Mode=OneWay}" />
+                                    </Grid>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Text="{x:Bind Name, Mode=OneWay}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <Slider Minimum="0" Maximum="100" StepFrequency="1" Margin="0,-4,0,0"
+                                                Value="{x:Bind Volume, Mode=TwoWay}"
+                                                AutomationProperties.Name="{x:Bind Name, Mode=OneWay}" />
+                                        <Rectangle Style="{StaticResource Meter}" RenderTransformOrigin="0,0.5">
+                                            <Rectangle.RenderTransform>
+                                                <ScaleTransform ScaleX="{x:Bind Peak, Mode=OneWay}" />
+                                            </Rectangle.RenderTransform>
+                                        </Rectangle>
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Margin="0,14,0,0" Style="{StaticResource IconButton}"
+                                            Click="{x:Bind ToggleMute}"
+                                            ToolTipService.ToolTip="{x:Bind loc:Loc.T('Mixer.Mute')}"
+                                            AutomationProperties.Name="{x:Bind loc:Loc.T('Mixer.Mute')}">
+                                        <FontIcon FontSize="16" Glyph="{x:Bind MuteGlyph, Mode=OneWay}" />
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Footer -->
+        <Grid Grid.Row="5">
+            <HyperlinkButton Padding="4,2" Content="{x:Bind loc:Loc.T('Mixer.SoundSettings')}" Click="OpenSoundSettings" />
+            <Button x:Name="MoreButton" HorizontalAlignment="Right" Style="{StaticResource IconButton}"
+                    ToolTipService.ToolTip="{x:Bind loc:Loc.T('Mixer.More')}"
+                    AutomationProperties.Name="{x:Bind loc:Loc.T('Mixer.More')}"
+                    Click="ShowMoreMenu">
+                <FontIcon FontSize="16" Glyph="&#xE713;" />
+            </Button>
+        </Grid>
+    </Grid>
+</UserControl>
