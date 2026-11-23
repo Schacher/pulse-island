@@ -58,6 +58,7 @@ public sealed partial class MixerView : UserControl
         menu.Items.Add(autostart);
 
         menu.Items.Add(new MenuFlyoutSeparator());
+        menu.Items.Add(Item("Menu.Settings", "", _app.OpenSettings));
         menu.Items.Add(Item("Menu.Export", "", () => _ = _app.ExportSettingsAsync()));
         menu.Items.Add(Item("Menu.Import", "", () => _ = _app.ImportSettingsAsync()));
         menu.Items.Add(new MenuFlyoutSeparator());

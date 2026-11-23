@@ -7,6 +7,7 @@ using PulseIsland.Core.Localization;
 using PulseIsland.Core.Settings;
 using PulseIsland.Island;
 using PulseIsland.Mixer;
+using PulseIsland.Settings;
 using PulseIsland.Platform;
 using PulseIsland.Platform.Audio;
 using PulseIsland.Platform.Media;
@@ -19,7 +20,7 @@ namespace PulseIsland;
 public partial class App : Application
 {
     private const int HotkeyMixer = 1, HotkeyMic = 2;
-    private const int MenuOpen = 1, MenuExit = 2, MenuIsland = 3, MenuCleaning = 4;
+    private const int MenuOpen = 1, MenuExit = 2, MenuIsland = 3, MenuCleaning = 4, MenuSettings = 5;
 
     internal static string AppVersion { get; } = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
     internal static string WindowsBuild { get; } = ReadWindowsBuild();
@@ -33,6 +34,7 @@ public partial class App : Application
     private AudioService _audio = null!;
     private MixerViewModel _vm = null!;
     private MixerWindow? _mixerWindow;
+    private SettingsWindow? _settingsWindow;
     private ForegroundWatcher _foreground = null!;
     private MediaService _media = null!;
     private IslandController _island = null!;
@@ -105,6 +107,7 @@ public partial class App : Application
         _ = _media.StartAsync();
 
         if (!Environment.GetCommandLineArgs().Contains(AutoStart.Argument)) Mixer.Show();
+        if (Environment.GetEnvironmentVariable("PULSE_DEMO") == "settings") OpenSettings(); // dev aid for screenshots
         Log.Info($"started {AppVersion} on Windows {WindowsBuild}");
     }
 
@@ -134,35 +137,50 @@ public partial class App : Application
         _osd.ApplySettings();
         _mixerWindow?.Rebuild();
         _shell.SetTooltip(Loc.T("Tray.Tooltip"));
+        _settingsWindow?.Rebuild();
     }
 
-    internal async Task ExportSettingsAsync()
+    /// <summary>Created on demand and dropped when closed, so it costs no memory otherwise.</summary>
+    internal void OpenSettings()
     {
+        if (_settingsWindow == null)
+        {
+            _settingsWindow = new SettingsWindow(this);
+            _settingsWindow.Closed += (_, _) => _settingsWindow = null;
+        }
+        _settingsWindow.Activate();
+    }
+
+    /// <summary>Owner 0 = the mixer flyout (kept open while the picker is up), else that window.</summary>
+    internal async Task ExportSettingsAsync(nint owner = 0, Action<string, bool>? report = null)
+    {
+        report ??= (text, warning) => _vm.ShowMessage(text, warning);
         var picker = new FileSavePicker { SuggestedFileName = "PulseIsland-settings" };
         picker.FileTypeChoices.Add("JSON", new List<string> { ".json" });
-        WinRT.Interop.InitializeWithWindow.Initialize(picker, Mixer.Hwnd);
-        Mixer.SuppressAutoHide = true;
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, owner != 0 ? owner : Mixer.Hwnd);
+        if (owner == 0) Mixer.SuppressAutoHide = true;
         try
         {
             var file = await picker.PickSaveFileAsync();
             if (file == null) return;
             _store.Export(Settings, file.Path);
-            _vm.ShowMessage(Loc.T("Export.Done"));
+            report(Loc.T("Export.Done"), false);
         }
         catch (Exception e)
         {
             Log.Error("export", e);
-            _vm.ShowMessage(e.Message, warning: true);
+            report(e.Message, true);
         }
-        finally { Mixer.SuppressAutoHide = false; }
+        finally { if (owner == 0) Mixer.SuppressAutoHide = false; }
     }
 
-    internal async Task ImportSettingsAsync()
+    internal async Task ImportSettingsAsync(nint owner = 0, Action<string, bool>? report = null)
     {
+        report ??= (text, warning) => _vm.ShowMessage(text, warning);
         var picker = new FileOpenPicker();
         picker.FileTypeFilter.Add(".json");
-        WinRT.Interop.InitializeWithWindow.Initialize(picker, Mixer.Hwnd);
-        Mixer.SuppressAutoHide = true;
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, owner != 0 ? owner : Mixer.Hwnd);
+        if (owner == 0) Mixer.SuppressAutoHide = true;
         try
         {
             var file = await picker.PickSingleFileAsync();
@@ -170,7 +188,7 @@ public partial class App : Application
             var imported = SettingsStore.TryImport(file.Path);
             if (imported == null)
             {
-                _vm.ShowMessage(Loc.T("Import.Failed"), warning: true);
+                report(Loc.T("Import.Failed"), true);
                 return;
             }
             imported.BrokenFeatures = Settings.BrokenFeatures; // machine-specific, never taken from a backup
@@ -181,14 +199,15 @@ public partial class App : Application
             RegisterHotkeys();
             SetLanguage(imported.Language);
             ApplyIslandSettings();
-            _vm.ShowMessage(Loc.T("Import.Done"));
+            _settingsWindow?.Rebuild();
+            report(Loc.T("Import.Done"), false);
         }
         catch (Exception e)
         {
             Log.Error("import", e);
-            _vm.ShowMessage(e.Message, warning: true);
+            report(e.Message, true);
         }
-        finally { Mixer.SuppressAutoHide = false; }
+        finally { if (owner == 0) Mixer.SuppressAutoHide = false; }
     }
 
     // ---- undocumented features ----
@@ -216,7 +235,14 @@ public partial class App : Application
 
     // ---- tray & hotkeys ----
 
-    private void RegisterHotkeys()
+    /// <summary>While a shortcut is being recorded, ours must not fire (or Windows would eat the keys).</summary>
+    internal void SuspendHotkeys()
+    {
+        _shell.UnregisterHotkey(HotkeyMixer);
+        _shell.UnregisterHotkey(HotkeyMic);
+    }
+
+    internal void RegisterHotkeys()
     {
         _shell.UnregisterHotkey(HotkeyMixer);
         _shell.UnregisterHotkey(HotkeyMic);
@@ -243,10 +269,11 @@ public partial class App : Application
         var island = Loc.T(Settings.Island.Enabled ? "Menu.HideIsland" : "Menu.ShowIsland");
         var chosen = _shell.ShowMenu(x, y,
             [(MenuOpen, Loc.T("Tray.OpenMixer")), (MenuIsland, island), (MenuCleaning, Loc.T("Cleaning.Button", Settings.Cleaning.Minutes)),
-             (0, ""), (MenuExit, Loc.T("Tray.Exit"))]);
+             (MenuSettings, Loc.T("Menu.Settings")), (0, ""), (MenuExit, Loc.T("Tray.Exit"))]);
         if (chosen == MenuOpen) Mixer.Show();
         else if (chosen == MenuIsland) SetIsland(s => s.Enabled = !s.Enabled);
         else if (chosen == MenuCleaning) _osd.StartCleaning();
+        else if (chosen == MenuSettings) OpenSettings();
         else if (chosen == MenuExit) Shutdown();
     }
 
@@ -279,6 +306,7 @@ public partial class App : Application
         SaveNow();
         _showWait?.Unregister(null);
         _mixerWindow?.Hide();
+        _settingsWindow?.Close();
         _osd.Dispose(); // releases the keyboard if a cleaning lock is active
         _wellness.Dispose();
         _island.Dispose();
