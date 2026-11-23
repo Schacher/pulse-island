@@ -95,6 +95,7 @@ internal sealed class IslandWindow : Window
         _fill = _compositor.CreateColorBrush(Windows.UI.Color.FromArgb(255, 13, 13, 15));
         var shape = _compositor.CreateSpriteShape(_geometry);
         shape.FillBrush = _fill;
+        _shape = shape;
         var shapes = _compositor.CreateShapeVisual();
         shapes.Size = new Vector2(CanvasWidth, CanvasHeight);
         shapes.Shapes.Add(shape);
@@ -126,15 +127,27 @@ internal sealed class IslandWindow : Window
         _regionTimer.Tick += (_, _) => SetRegion(_size, _size);
     }
 
-    /// <summary>Lite mode: no springs or glow, just snap.</summary>
+    /// <summary>Off in Lite Mode: no springs or glow, shapes just snap.</summary>
     public bool Animate
     {
         get => _animate;
         set
         {
+            if (_animate == value) return;
             _animate = value;
-            _shadow.Opacity = value ? _shadow.Opacity : 0;
+            SetGlow(_accent); // re-applies (or drops) the glow for the new mode
         }
+    }
+
+    private Windows.UI.Color? _accent;
+    private CompositionSpriteShape? _shape;
+
+    /// <summary>Glass: translucent dark fill (what's behind shows through, without blur) and a faint light edge.</summary>
+    public void SetGlass(bool glass)
+    {
+        _fill.Color = glass ? Windows.UI.Color.FromArgb(200, 30, 30, 36) : Windows.UI.Color.FromArgb(255, 13, 13, 15);
+        _shape!.StrokeBrush = glass ? _compositor.CreateColorBrush(Windows.UI.Color.FromArgb(60, 255, 255, 255)) : null;
+        _shape.StrokeThickness = glass ? 1 : 0;
     }
 
     public bool IsShown => AppWindow.IsVisible;
@@ -169,6 +182,7 @@ internal sealed class IslandWindow : Window
 
     public void SetGlow(Windows.UI.Color? accent)
     {
+        _accent = accent;
         var color = accent ?? Windows.UI.Color.FromArgb(255, 0, 0, 0);
         var opacity = !_animate ? 0f : accent == null ? 0.45f : 0.75f;
         if (_animate && IsShown)

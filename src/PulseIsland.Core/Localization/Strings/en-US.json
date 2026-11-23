@@ -133,5 +133,13 @@
   "Settings.CleaningMinutes": "Lock for",
   "Settings.Backup": "Backup",
   "Settings.Minutes": "{0} (min)",
-  "Settings.Ml": "{0} (ml)"
+  "Settings.Ml": "{0} (ml)",
+  "Settings.LiteMode": "Lite Mode (no animations, glow or spectrum; for older PCs)",
+  "Settings.Theme": "Theme (mixer and settings)",
+  "Theme.system": "Windows default",
+  "Theme.light": "Light",
+  "Theme.dark": "Dark",
+  "Settings.IslandStyle": "Island look",
+  "IslandStyle.black": "Black",
+  "IslandStyle.glass": "Glass"
 }

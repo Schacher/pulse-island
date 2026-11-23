@@ -25,6 +25,8 @@
     <PublishAot>true</PublishAot>
     <InvariantGlobalization>false</InvariantGlobalization>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <!-- A tray app idles almost all the time: prefer a small heap over GC throughput. -->
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
   </PropertyGroup>
 
   <ItemGroup>
@@ -36,6 +38,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PulseIsland.Core\PulseIsland.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="System.GC.ConserveMemory" Value="7" />
   </ItemGroup>
 
   <ItemGroup>

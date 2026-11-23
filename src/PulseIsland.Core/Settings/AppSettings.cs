@@ -22,6 +22,12 @@ public sealed class AppSettings
     /// <summary>True once the "running in the tray" hint was shown.</summary>
     public bool FirstRunHintShown { get; set; }
 
+    /// <summary>For low-end PCs: no springs, glow, fades or audio spectrum.</summary>
+    public bool LiteMode { get; set; }
+
+    /// <summary>Mixer and settings windows: "system", "light" or "dark". The island is always dark.</summary>
+    public string Theme { get; set; } = "system";
+
     public IslandSettings Island { get; set; } = new();
     public WellnessSettings Wellness { get; set; } = new();
     public OsdSettings Osd { get; set; } = new();
@@ -80,6 +86,9 @@ public sealed class IslandSettings
     /// <summary>Offset from top-center, in DIPs.</summary>
     public int OffsetX { get; set; }
     public int OffsetY { get; set; } = 6;
+
+    /// <summary>"black" (solid) or "glass" (translucent dark with a light edge).</summary>
+    public string Style { get; set; } = "black";
 
     /// <summary>Size multiplier, 0.75–1.5.</summary>
     public double Scale { get; set; } = 1.0;

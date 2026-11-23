@@ -135,6 +135,21 @@ public class LocTests
     }
 
     [Fact]
+    public void AllEightLanguagesShip() => Assert.Equal(Loc.Supported.Order(), Loc.Available.Order());
+
+    [Theory]
+    [InlineData("ru-RU", "Микрофон")]
+    [InlineData("de", "Mikrofon")]
+    [InlineData("ja-JP", "マイク")]
+    [InlineData("zh-Hans-CN", "麦克风")]
+    public void ResolvesAndLoadsEachLanguage(string culture, string mic)
+    {
+        Loc.SetLanguage(Loc.Resolve(null, new CultureInfo(culture)));
+        Assert.Equal(mic, Loc.T("Mixer.Input"));
+        Loc.SetLanguage("en-US");
+    }
+
+    [Fact]
     public void PlaceholdersMatchEnglish()
     {
         var english = Loc.Load("en-US")!;

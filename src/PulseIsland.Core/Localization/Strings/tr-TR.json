@@ -133,5 +133,13 @@
   "Settings.CleaningMinutes": "Kilit süresi",
   "Settings.Backup": "Yedekleme",
   "Settings.Minutes": "{0} (dk)",
-  "Settings.Ml": "{0} (ml)"
+  "Settings.Ml": "{0} (ml)",
+  "Settings.LiteMode": "Lite Mode (animasyon, parlama ve spektrum yok; eski bilgisayarlar için)",
+  "Settings.Theme": "Tema (mikser ve ayarlar)",
+  "Theme.system": "Windows ile aynı",
+  "Theme.light": "Açık",
+  "Theme.dark": "Koyu",
+  "Settings.IslandStyle": "Ada görünümü",
+  "IslandStyle.black": "Siyah",
+  "IslandStyle.glass": "Cam"
 }

@@ -17,8 +17,7 @@ public sealed partial class IslandView : UserControl
         InitializeComponent();
         foreach (var bars in AllBars) bars.SetBrush(vm.AccentBrush);
 
-        // Panels cross-fade on the compositor when their Visibility flips.
-        foreach (var panel in new UIElement[] { CompactPanel, PeekPanel, ExpandedPanel, OsdPanel, CardPanel, CleaningPanel }) AddFade(panel);
+        SetAnimations(true);
 
         UnlockSlider.Unlocked += () => Vm.UnlockRequested?.Invoke();
 
@@ -45,6 +44,24 @@ public sealed partial class IslandView : UserControl
             panel.Height = h;
             panel.HorizontalAlignment = HorizontalAlignment.Center;
             panel.VerticalAlignment = VerticalAlignment.Top;
+            // Grow from the top-center, where the pill is anchored.
+            ElementCompositionPreview.GetElementVisual(panel).CenterPoint = new Vector3(w / 2, 0, 0);
+        }
+    }
+
+    private UIElement[] Panels => [CompactPanel, PeekPanel, ExpandedPanel, OsdPanel, CardPanel, CleaningPanel];
+
+    /// <summary>Panels cross-fade on the compositor when their Visibility flips; Lite Mode switches them instantly.</summary>
+    internal void SetAnimations(bool on)
+    {
+        foreach (var panel in Panels)
+        {
+            if (on) AddFade(panel);
+            else
+            {
+                ElementCompositionPreview.SetImplicitShowAnimation(panel, null);
+                ElementCompositionPreview.SetImplicitHideAnimation(panel, null);
+            }
         }
     }
 
@@ -86,9 +103,5 @@ public sealed partial class IslandView : UserControl
         fadeOut.InsertKeyFrame(1, 0);
         fadeOut.Duration = TimeSpan.FromMilliseconds(90); // the pill clip hides the edges, so a softer fade is safe
         ElementCompositionPreview.SetImplicitHideAnimation(panel, fadeOut);
-
-        // Scale from the top-center, where the pill is anchored.
-        ((FrameworkElement)panel).SizeChanged += (s, e) =>
-            ElementCompositionPreview.GetElementVisual((UIElement)s).CenterPoint = new Vector3((float)e.NewSize.Width / 2, 0, 0);
     }
 }

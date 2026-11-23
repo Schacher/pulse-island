@@ -68,8 +68,7 @@ internal sealed class IslandController : IDisposable
     {
         // The app's audio session often appears a moment after its media session does.
         _mixer.Apps.CollectionChanged += (_, _) => ResolveMediaApp();
-        Reposition();
-        Update();
+        ApplySettings();
         // Dev aid for screenshots: PULSE_DEMO=osd|card|cleaning|focus shows a sample (nothing is changed or locked).
         var demo = TimeSpan.FromSeconds(60);
         switch (Environment.GetEnvironmentVariable("PULSE_DEMO"))
@@ -92,6 +91,10 @@ internal sealed class IslandController : IDisposable
     /// <summary>Settings changed (menu, import): re-apply everything.</summary>
     public void ApplySettings()
     {
+        var lite = _app.Settings.LiteMode;
+        _window.Animate = !lite;
+        _window.SetGlass(Settings.Style == "glass");
+        _view.SetAnimations(!lite);
         Reposition();
         Update();
     }
@@ -204,7 +207,7 @@ internal sealed class IslandController : IDisposable
         }
 
         // Bars only run while music plays on a visible panel; the seek bar only while expanded.
-        var bars = Settings.Visualizer && _vm.IsPlaying && mode is IslandMode.Compact or IslandMode.Peek or IslandMode.Expanded;
+        var bars = Settings.Visualizer && !_app.Settings.LiteMode && _vm.IsPlaying && mode is IslandMode.Compact or IslandMode.Peek or IslandMode.Expanded;
         if (bars) EnsureCapture();
         else
         {

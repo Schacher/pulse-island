@@ -49,7 +49,9 @@ internal sealed class SettingsWindow : Window
         // General
         page.Children.Add(Section("Settings.General",
             Row("Menu.Language", LanguageBox()),
-            Row("Menu.StartWithWindows", Switch(AutoStart.IsEnabled, v => AutoStart.IsEnabled = v))));
+            Row("Menu.StartWithWindows", Switch(AutoStart.IsEnabled, v => AutoStart.IsEnabled = v)),
+            Row("Settings.Theme", Combo([("system", "Theme.system"), ("light", "Theme.light"), ("dark", "Theme.dark")], S.Theme, _app.SetTheme)),
+            Row("Settings.LiteMode", Switch(S.LiteMode, v => Change(a => a.LiteMode = v)))));
 
         // Shortcuts
         page.Children.Add(Section("Settings.Hotkeys",
@@ -60,6 +62,7 @@ internal sealed class SettingsWindow : Window
         var i = S.Island;
         page.Children.Add(Section("Menu.Island",
             Row("Menu.ShowIsland", Switch(i.Enabled, v => Change(a => a.Island.Enabled = v))),
+            Row("Settings.IslandStyle", Combo([("black", "IslandStyle.black"), ("glass", "IslandStyle.glass")], i.Style, v => Change(a => a.Island.Style = v))),
             Row("Settings.Monitor", Combo([("primary", "Menu.IslandPrimary"), ("active", "Menu.IslandActive")], i.Monitor, v => Change(a => a.Island.Monitor = v))),
             Row("Menu.Fullscreen", Combo([("dot", "Menu.Fullscreen.dot"), ("hide", "Menu.Fullscreen.hide"), ("show", "Menu.Fullscreen.show")], i.Fullscreen, v => Change(a => a.Island.Fullscreen = v))),
             Row("Settings.AllowList", AllowListBox()),
@@ -113,7 +116,13 @@ internal sealed class SettingsWindow : Window
         import.Click += async (_, _) => await _app.ImportSettingsAsync(Hwnd, Report);
         page.Children.Add(Section("Settings.Backup", new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { export, import } }));
 
-        Content = new ScrollViewer { Content = page, HorizontalScrollMode = ScrollMode.Disabled };
+        Content = new ScrollViewer { Content = page, HorizontalScrollMode = ScrollMode.Disabled, RequestedTheme = _app.ElementTheme };
+        AppWindow.TitleBar.PreferredTheme = _app.ElementTheme switch
+        {
+            ElementTheme.Light => TitleBarTheme.Light,
+            ElementTheme.Dark => TitleBarTheme.Dark,
+            _ => TitleBarTheme.UseDefaultAppMode,
+        };
     }
 
     private nint Hwnd => WinRT.Interop.WindowNative.GetWindowHandle(this);

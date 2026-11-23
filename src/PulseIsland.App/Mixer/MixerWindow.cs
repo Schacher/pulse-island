@@ -65,7 +65,7 @@ internal sealed class MixerWindow : Window
     /// <summary>Recreate the content (used after a language change: texts are bound once).</summary>
     public void Rebuild()
     {
-        var view = new MixerView(_vm, _app);
+        var view = new MixerView(_vm, _app) { RequestedTheme = _app.ElementTheme }; // the acrylic backdrop follows it
         var escape = new Microsoft.UI.Xaml.Input.KeyboardAccelerator { Key = Windows.System.VirtualKey.Escape };
         escape.Invoked += (_, e) => { e.Handled = true; Hide(); };
         view.KeyboardAccelerators.Add(escape);

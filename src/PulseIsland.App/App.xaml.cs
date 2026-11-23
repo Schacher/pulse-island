@@ -65,7 +65,8 @@ public partial class App : Application
 
         _store = new SettingsStore(SettingsStore.DefaultPath);
         Settings = _store.Load();
-        Loc.SetLanguage(Loc.Resolve(Settings.Language, CultureInfo.CurrentUICulture));
+        // PULSE_LANG (dev aid) tries a language for screenshots without touching the saved setting.
+        Loc.SetLanguage(Loc.Resolve(Environment.GetEnvironmentVariable("PULSE_LANG") ?? Settings.Language, CultureInfo.CurrentUICulture));
 
         _saveTimer = _ui.CreateTimer();
         _saveTimer.Interval = TimeSpan.FromMilliseconds(500);
@@ -138,6 +139,25 @@ public partial class App : Application
         _mixerWindow?.Rebuild();
         _shell.SetTooltip(Loc.T("Tray.Tooltip"));
         _settingsWindow?.Rebuild();
+    }
+
+    internal ElementTheme ElementTheme => Settings.Theme switch
+    {
+        "light" => ElementTheme.Light,
+        "dark" => ElementTheme.Dark,
+        _ => ElementTheme.Default, // follow Windows
+    };
+
+    internal void SetTheme(string theme)
+    {
+        Settings.Theme = theme;
+        SaveSettings();
+        // Deferred: called from a control inside the settings page that the rebuild replaces.
+        _ui.TryEnqueue(() =>
+        {
+            _mixerWindow?.Rebuild();
+            _settingsWindow?.Rebuild();
+        });
     }
 
     /// <summary>Created on demand and dropped when closed, so it costs no memory otherwise.</summary>
